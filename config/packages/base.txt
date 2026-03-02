@@ -1,0 +1,20 @@
+# 基础系统与网络（base profile）
+systemd
+bash
+coreutils
+procps-ng
+util-linux
+filesystem
+glibc
+passwd
+hostname
+# 网络与基础服务
+NetworkManager
+openssh-server
+chrony
+# 最小依赖
+alsa-utils
+wpa_supplicant
+bluez
+pulseaudio-module-bluetooth
+sudo

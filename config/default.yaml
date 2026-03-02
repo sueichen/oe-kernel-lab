@@ -1,0 +1,15 @@
+# oe-kernel-lab 默认配置（YAML 参考，脚本实际读取 config/default.conf）
+# 可通过环境变量覆盖
+arch: x86_64
+openeuler_version: "24.03-LTS-SP3"
+rootfs_dir: rootfs
+qcow2_img: rootfs.qcow2
+initramfs_img: initramfs.img
+package_list: debug
+qcow2_size_gb: 16
+root_password: "OpenEuler@123"
+modules_dir: my_modules
+kernel_image: bzImage
+memory_mb: 4096
+smp: 4
+vmlinux: ""

@@ -1,0 +1,11 @@
+# 调试与开发工具（默认推荐，便于内核/用户态调试）
+vim
+net-tools
+iproute
+iputils
+gcc
+cmake
+make
+gdb
+strace
+htop
