@@ -37,11 +37,11 @@ if [ ! -f "$KERNEL_PATH" ]; then
     exit 1
 fi
 
-# x86_64 使用 dracut 生成的 initramfs 时建议 -cpu host，避免宿主机二进制触发 invalid opcode
+# x86_64 使用 dracut 生成的 initramfs 时建议 -cpu max，避免宿主机二进制触发 invalid opcode
 QEMU_EXTRA=""
 if [ "$ARCH" = "x86_64" ]; then
     QEMU_BIN="qemu-system-x86_64"
-    QEMU_EXTRA="-cpu host"
+    QEMU_EXTRA="-cpu max"
     KERNEL_ARG="-kernel $KERNEL_PATH"
 elif [ "$ARCH" = "aarch64" ]; then
     QEMU_BIN="qemu-system-aarch64"
