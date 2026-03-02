@@ -5,17 +5,24 @@ set -e
 WORKDIR=$(cd "$(dirname "$0")/.." && pwd)
 cd "$WORKDIR"
 
-if [ -f "$WORKDIR/config/default.conf" ]; then
-    set -a
-    source "$WORKDIR/config/default.conf"
-    set +a
-fi
+# 加载 config（default.conf + default.yaml 覆盖）
+# shellcheck source=./load_config.sh
+source "$WORKDIR/scripts/load_config.sh"
 
 MODULES_DIR=${MODULES_DIR:-my_modules}
 INITRAMFS_IMG=${INITRAMFS_IMG:-initramfs.img}
 
-MODULES_PATH="$WORKDIR/$MODULES_DIR"
-OUT_IMG="$WORKDIR/$INITRAMFS_IMG"
+# 支持绝对路径：若已在 default.yaml 中配置为绝对路径则直接使用
+if [[ "$MODULES_DIR" = /* ]]; then
+    MODULES_PATH="$MODULES_DIR"
+else
+    MODULES_PATH="$WORKDIR/$MODULES_DIR"
+fi
+if [[ "$INITRAMFS_IMG" = /* ]]; then
+    OUT_IMG="$INITRAMFS_IMG"
+else
+    OUT_IMG="$WORKDIR/$INITRAMFS_IMG"
+fi
 
 if [ ! -d "$MODULES_PATH/lib/modules" ]; then
     echo "错误: 未找到 $MODULES_PATH/lib/modules，请先准备内核模块目录。"

@@ -14,7 +14,54 @@
 - `dnf` / `yum`、`rpm`、`curl`
 - `qemu-system-x86_64` 或 `qemu-system-aarch64`
 - 制作 initramfs 需安装 `dracut`
-- 调试内核需自备编译好的内核与模块（见下）
+- 调试内核需自备编译好的内核与模块（见下方「前期准备」）
+
+## 前期准备：内核与模块
+
+在构建 initramfs 和运行 QEMU 之前，需要准备好**内核可引导镜像**（`bzImage`/`Image`）、**带符号的 vmlinux** 以及**内核模块目录**（`modules_dir`）。这些由内核源码编译生成。
+
+### 必须准备的产物
+
+| 产物 | 用途 | 说明 |
+|------|------|------|
+| **bzImage**（x86_64）或 **Image**（aarch64） | QEMU 启动内核 | 可引导的压缩内核镜像 |
+| **vmlinux** | GDB 调试符号 | 带调试信息的 ELF，用于 `make gdb` |
+| **modules_dir**（即 `lib/modules/<内核版本>`） | initramfs 与根文件系统加载驱动 | 内含 `modules.dep`、`kernel/` 等，供 dracut 打包 |
+
+### 内核编译生成上述产物
+
+在内核源码目录下执行（以 x86_64 为例）：
+
+```bash
+# 进入内核源码目录
+cd /path/to/linux-src
+
+# 配置（可选：make menuconfig 按需修改）
+make defconfig
+
+# 编译内核与模块
+make -j$(nproc)
+make modules
+
+# 安装模块到指定目录（将 <项目根> 替换为 oe-kernel-lab 所在路径，或你在 config/default.yaml 中配置的 modules_dir 的父目录）
+make modules_install INSTALL_MOD_PATH=<项目根>/my_modules
+
+# 产物位置（示例，x86_64）：
+# - 可引导镜像: arch/x86/boot/bzImage  → 拷贝到项目根或配置 kernel_image 指向
+# - 符号文件:   vmlinux                    → 拷贝到项目根或配置 vmlinux 指向
+# - 模块目录:   <INSTALL_MOD_PATH>/lib/modules/$(make -s kernelrelease)  → 与 config 中 modules_dir 对应
+```
+
+aarch64 时，可引导镜像为 `arch/arm64/boot/Image`，编译前需指定架构，例如：
+
+```bash
+make defconfig ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+make modules ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+make modules_install INSTALL_MOD_PATH=<项目根>/my_modules ARCH=arm64
+```
+
+编译完成后，请确保 `config/default.yaml`（或 `default.conf`）中的 **modules_dir** 指向上述 `INSTALL_MOD_PATH` 下的 `lib/modules/<kver>` 的**父目录**（即包含 `lib/modules` 的目录），**kernel_image** 与 **vmlinux** 指向你的 `bzImage`/`Image` 和 `vmlinux` 路径（可为绝对路径）。
 
 ## 快速开始
 
@@ -25,11 +72,10 @@ make rootfs
 # 2. 打包为 qcow2
 make qcow2
 
-# 3. 准备内核模块目录后生成 initramfs
-# 将内核编译产出的 lib/modules/<kver> 放到项目根下的 my_modules/lib/modules/<kver>
+# 3. 准备内核模块目录后生成 initramfs（需先完成「前期准备」中的 modules_dir）
 make initramfs
 
-# 4. 将 bzImage（x86_64）或 Image（aarch64）放到项目根，然后启动 QEMU
+# 4. 将 bzImage/Image 与 vmlinux 放到项目根或已在 config/default.yaml 中配置路径后，启动 QEMU
 make run
 ```
 
@@ -41,7 +87,35 @@ make all
 
 ## 配置
 
-主配置在 `config/default.conf`，可通过环境变量覆盖：
+配置可通过 **`config/default.conf`**（KEY=value）、**`config/default.yaml`**（YAML）或**环境变量**指定。脚本先读 `default.conf`，再用 `default.yaml` 覆盖，最后环境变量优先。
+
+### config/default.yaml 用法
+
+- **与 default.conf 等效**：YAML 中的项会覆盖同名的 conf 配置（键名对应关系见下表）。
+- **支持绝对路径**：`modules_dir`、`kernel_image`、`initramfs_img`、`qcow2_img`、`vmlinux` 可写绝对路径，便于内核与模块放在项目外时使用。
+
+| YAML 键（default.yaml） | 说明 | 默认 |
+|-------------------------|------|------|
+| arch | 架构（x86_64 / aarch64） | x86_64 |
+| rootfs_dir | rootfs 目录名 | rootfs |
+| qcow2_img | 输出的 qcow2 文件名或绝对路径 | rootfs.qcow2 |
+| initramfs_img | initramfs 输出文件名或绝对路径 | initramfs.img |
+| package_list | 包列表 profile（debug / minimal） | debug |
+| root_password | root 密码 | OpenEuler@123 |
+| **modules_dir** | **内核模块目录**（用于 initramfs；可为绝对路径，如 `/path/to/my_modules`） | my_modules |
+| **kernel_image** | **内核镜像路径**（bzImage/Image 或绝对路径） | bzImage / Image（按架构） |
+| **vmlinux** | **GDB 符号文件路径**（可为绝对路径） | 空 |
+| memory_mb / smp | 内存与 CPU 数 | 4096 / 4 |
+
+示例（将内核与模块放在项目外时，在 `config/default.yaml` 中写）：
+
+```yaml
+modules_dir: /path/to/my_modules    # 含 lib/modules/<kver> 的目录
+kernel_image: /path/to/bzImage     # 或 /path/to/Image（aarch64）
+vmlinux: /path/to/vmlinux          # 可选，GDB 调试用
+```
+
+### config/default.conf 与环境变量
 
 | 变量 | 说明 | 默认 |
 |------|------|------|
@@ -82,7 +156,7 @@ make run
 ./run/run-qemu.sh
 ```
 
-需事先将内核镜像（x86_64 为 `bzImage`，aarch64 为 `Image`）放在项目根，或设置 `KERNEL_IMAGE=/path/to/kernel`。
+需事先完成「前期准备」：内核镜像（x86_64 为 `bzImage`，aarch64 为 `Image`）与模块目录就绪；镜像可放在项目根，或在 `config/default.yaml` 中配置 `kernel_image`（可写绝对路径）。
 
 ### GDB 调试内核
 
@@ -100,7 +174,7 @@ make run
    ./run/gdb-attach.sh
    ```
 
-若需带符号调试，将 `vmlinux` 放在项目根或设置 `VMLINUX=/path/to/vmlinux`。更多说明见 [docs/gdb.md](docs/gdb.md)。
+若需带符号调试，将 `vmlinux` 放在项目根或在 `config/default.yaml` 中配置 `vmlinux`（可写绝对路径）。更多说明见 [docs/gdb.md](docs/gdb.md)。
 
 ## 目录结构
 
@@ -110,7 +184,7 @@ oe-kernel-lab/
 ├── Makefile              # 统一入口
 ├── config/
 │   ├── default.conf      # 默认配置
-│   ├── default.yaml      # 配置说明（YAML）
+│   ├── default.yaml      # 主配置（YAML，可覆盖 default.conf，支持绝对路径）
 │   ├── packages/         # 包列表 base.txt, debug.txt, minimal.txt
 │   └── openeuler/        # openEuler 源配置
 ├── scripts/

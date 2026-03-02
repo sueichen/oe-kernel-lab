@@ -1,4 +1,4 @@
-# oe-kernel-lab 默认配置（YAML 参考，脚本实际读取 config/default.conf）
+# oe-kernel-lab 默认配置（YAML，会覆盖 default.conf；支持 modules_dir/kernel_image 等绝对路径）
 # 可通过环境变量覆盖
 arch: x86_64
 openeuler_version: "24.03-LTS-SP3"
@@ -8,6 +8,7 @@ initramfs_img: initramfs.img
 package_list: debug
 qcow2_size_gb: 16
 root_password: "OpenEuler@123"
+# 可为相对路径（相对项目根）或绝对路径（内核/模块在项目外时）
 modules_dir: my_modules
 kernel_image: bzImage
 memory_mb: 4096

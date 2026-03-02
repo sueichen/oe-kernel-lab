@@ -5,11 +5,9 @@ set -e
 WORKDIR=$(cd "$(dirname "$0")/.." && pwd)
 cd "$WORKDIR"
 
-if [ -f "$WORKDIR/config/default.conf" ]; then
-    set -a
-    source "$WORKDIR/config/default.conf"
-    set +a
-fi
+# 加载 config（default.conf + default.yaml 覆盖）
+# shellcheck source=../scripts/load_config.sh
+source "$WORKDIR/scripts/load_config.sh"
 
 ARCH=${ARCH:-x86_64}
 QCOW2_IMG=${QCOW2_IMG:-rootfs.qcow2}
@@ -21,9 +19,10 @@ MEMORY_MB=${MEMORY_MB:-4096}
 SMP=${SMP:-4}
 DEBUG=${DEBUG:-0}
 
-QCOW2_PATH="$WORKDIR/$QCOW2_IMG"
-INITRD_PATH="$WORKDIR/$INITRAMFS_IMG"
-KERNEL_PATH="$WORKDIR/$KERNEL_IMAGE"
+# 支持绝对路径（可在 default.yaml 中配置为绝对路径）
+[[ "$QCOW2_IMG" = /* ]] && QCOW2_PATH="$QCOW2_IMG" || QCOW2_PATH="$WORKDIR/$QCOW2_IMG"
+[[ "$INITRAMFS_IMG" = /* ]] && INITRD_PATH="$INITRAMFS_IMG" || INITRD_PATH="$WORKDIR/$INITRAMFS_IMG"
+[[ "$KERNEL_IMAGE" = /* ]] && KERNEL_PATH="$KERNEL_IMAGE" || KERNEL_PATH="$WORKDIR/$KERNEL_IMAGE"
 
 if [ ! -f "$QCOW2_PATH" ]; then
     echo "错误: 未找到镜像 $QCOW2_PATH，请先执行 make qcow2"
