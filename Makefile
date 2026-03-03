@@ -9,7 +9,7 @@ export ARCH
 export PACKAGE_LIST
 export ROOTFS_DIR
 
-.PHONY: rootfs qcow2 initramfs all run gdb clean help
+.PHONY: rootfs qcow2 initramfs all run gdb clean dist help
 
 help:
 	@echo "oe-kernel-lab - openEuler QEMU 内核调试环境"
@@ -20,6 +20,7 @@ help:
 	@echo "  make all        - 依次执行 rootfs -> qcow2 -> initramfs"
 	@echo "  make run        - 启动 QEMU（可设置 DEBUG=1 等待 GDB）"
 	@echo "  make gdb        - 连接 QEMU GDB 服务（需先 DEBUG=1 make run）"
+	@echo "  make dist       - 打包可发布内容为 dist/oe-kernel-lab-<VERSION>.tar.gz 与 .zip（可设置 VERSION=v1.0.0）"
 	@echo "  make clean      - 删除构建产物（rootfs 目录、qcow2、initramfs、raw）"
 	@echo ""
 	@echo "环境变量示例: ARCH=aarch64 make rootfs   PACKAGE_LIST=minimal make rootfs"
@@ -41,6 +42,9 @@ run:
 
 gdb:
 	@bash run/gdb-attach.sh
+
+dist:
+	@bash scripts/mk_release.sh "$(VERSION)"
 
 clean:
 	@echo "清理构建产物..."

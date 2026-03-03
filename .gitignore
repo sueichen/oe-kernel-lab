@@ -1,5 +1,6 @@
-# 构建产物
+# 构建产物与发布包
 /rootfs
+/dist
 rootfs.qcow2
 rootfs.raw
 initramfs.img
