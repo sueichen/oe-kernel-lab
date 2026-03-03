@@ -46,7 +46,8 @@ if [ "$ARCH" = "x86_64" ]; then
     KERNEL_ARG="-kernel $KERNEL_PATH"
 elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
     QEMU_BIN="qemu-system-aarch64"
-    QEMU_EXTRA="-machine virt -cpu max"
+    # 使用 virt-7.2 与 cortex-a72 避免部分 QEMU 上 virt-8.x + -cpu max 触发的 regime_is_user 断言崩溃
+    QEMU_EXTRA="-machine virt-7.2 -cpu cortex-a72"
     KERNEL_ARG="-kernel $KERNEL_PATH"
 else
     echo "错误: 不支持的架构 ARCH=$ARCH（支持 x86_64, aarch64/arm64）"
@@ -60,6 +61,13 @@ if [ "$DEBUG" = "1" ] || [ "$DEBUG" = "yes" ]; then
     echo "在另一终端执行: ./run/gdb-attach.sh 或 make gdb"
 fi
 
+# aarch64 virt 使用 PL011 串口 (ttyAMA0)，x86_64 使用 ttyS0
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    CONSOLE_APPEND="console=ttyAMA0"
+else
+    CONSOLE_APPEND="console=ttyS0"
+fi
+
 echo "启动 QEMU ($ARCH): $QCOW2_PATH"
 exec $QEMU_BIN \
     $QEMU_EXTRA \
@@ -70,4 +78,4 @@ exec $QEMU_BIN \
     -drive "file=$QCOW2_PATH,format=qcow2,if=virtio" \
     -nographic \
     $GDB_ARGS \
-    -append "root=/dev/vda console=ttyS0 rw"
+    -append "root=/dev/vda ${CONSOLE_APPEND} rw"
