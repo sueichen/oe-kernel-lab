@@ -13,7 +13,7 @@ ARCH=${ARCH:-x86_64}
 QCOW2_IMG=${QCOW2_IMG:-rootfs.qcow2}
 INITRAMFS_IMG=${INITRAMFS_IMG:-initramfs.img}
 if [ -z "$KERNEL_IMAGE" ]; then
-    [ "$ARCH" = "aarch64" ] && KERNEL_IMAGE=Image || KERNEL_IMAGE=bzImage
+    [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ] && KERNEL_IMAGE=Image || KERNEL_IMAGE=bzImage
 fi
 MEMORY_MB=${MEMORY_MB:-4096}
 SMP=${SMP:-4}
@@ -38,17 +38,18 @@ if [ ! -f "$KERNEL_PATH" ]; then
 fi
 
 # x86_64 使用 dracut 生成的 initramfs 时建议 -cpu max，避免宿主机二进制触发 invalid opcode
+# 支持 aarch64 / arm64 两种写法（load_config 已统一为 aarch64，此处兼容未经过 load_config 的情况）
 QEMU_EXTRA=""
 if [ "$ARCH" = "x86_64" ]; then
     QEMU_BIN="qemu-system-x86_64"
     QEMU_EXTRA="-cpu max"
     KERNEL_ARG="-kernel $KERNEL_PATH"
-elif [ "$ARCH" = "aarch64" ]; then
+elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
     QEMU_BIN="qemu-system-aarch64"
     QEMU_EXTRA="-machine virt -cpu max"
     KERNEL_ARG="-kernel $KERNEL_PATH"
 else
-    echo "错误: 不支持的架构 ARCH=$ARCH（支持 x86_64, aarch64）"
+    echo "错误: 不支持的架构 ARCH=$ARCH（支持 x86_64, aarch64/arm64）"
     exit 1
 fi
 

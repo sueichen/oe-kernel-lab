@@ -1,5 +1,7 @@
 # 加载 config/default.conf 与 config/default.yaml（YAML 覆盖）
 # 被 scripts/*.sh 与 run/*.sh source，需在设置 WORKDIR 之后 source
+# 环境变量优先于配置文件（make run ARCH=aarch64 等才能生效）
+SAVED_ARCH=$ARCH
 [ -n "$WORKDIR" ] || WORKDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 CONFIG_DIR="$WORKDIR/config"
 
@@ -36,3 +38,7 @@ if [ -f "$CONFIG_DIR/default.yaml" ]; then
         fi
     done < "$CONFIG_DIR/default.yaml"
 fi
+
+# 环境变量优先；统一架构名：openEuler/QEMU 使用 aarch64，用户可能传入 arm64
+ARCH=${SAVED_ARCH:-${ARCH:-x86_64}}
+[ "$ARCH" = "arm64" ] && ARCH=aarch64
