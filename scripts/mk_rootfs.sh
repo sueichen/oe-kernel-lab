@@ -5,6 +5,8 @@ set -e
 WORKDIR=$(cd "$(dirname "$0")/.." && pwd)
 cd "$WORKDIR"
 
+# 保存 make 传入的环境变量（source 会覆盖）
+SAVED_ARCH=$ARCH
 # 加载配置（环境变量优先）
 if [ -f "$WORKDIR/config/default.conf" ]; then
     set -a
@@ -12,7 +14,10 @@ if [ -f "$WORKDIR/config/default.conf" ]; then
     source "$WORKDIR/config/default.conf"
     set +a
 fi
-ARCH=${ARCH:-x86_64}
+# 环境变量优先于配置文件（make ARCH=arm64 rootfs 才能生效）
+ARCH=${SAVED_ARCH:-${ARCH:-x86_64}}
+# 统一架构名：openEuler 使用 aarch64，用户可能传入 arm64
+[ "$ARCH" = "arm64" ] && ARCH=aarch64
 ROOTFS_DIR=${ROOTFS_DIR:-rootfs}
 PACKAGE_LIST=${PACKAGE_LIST:-debug}
 ROOT_PASSWORD=${ROOT_PASSWORD:-OpenEuler@123}

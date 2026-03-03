@@ -4,6 +4,10 @@
 
 WORKDIR := $(shell pwd)
 export WORKDIR
+# 将 make ARCH=arm64 等传入脚本（否则脚本拿不到 ARCH，会用 default.conf 的 x86_64）
+export ARCH
+export PACKAGE_LIST
+export ROOTFS_DIR
 
 .PHONY: rootfs qcow2 initramfs all run gdb clean help
 
