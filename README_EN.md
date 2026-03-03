@@ -11,10 +11,29 @@ OpenEuler-based QEMU kernel debugging environment: build rootfs, qcow2 image, an
 ## Requirements
 
 - Host: openEuler, CentOS, RHEL, or similar (dnf/yum)
-- `dnf` / `yum`, `rpm`, `curl`
-- `qemu-system-x86_64` or `qemu-system-aarch64`
-- `dracut` for building initramfs
+- **rootfs**: `dnf`, `rpm`, `curl`, `python3`
+- **qcow2**: `qemu-img` (raw→qcow2), `e2fsprogs` (mkfs.ext4)
+- **initramfs**: `dracut`
+- **Run QEMU**: `qemu-system-x86` (x86_64 host) or `qemu-system-aarch64` (aarch64 host)
 - Your own built kernel and modules (see **Environment preparation** below)
+
+### Install dependencies (dnf)
+
+On openEuler / CentOS / RHEL, install build and QEMU packages. For running the VM, install **one** of the QEMU system packages according to host architecture:
+
+```bash
+# Build rootfs + qcow2 + initramfs (all hosts)
+sudo dnf install -y dnf rpm curl python3 e2fsprogs util-linux qemu-img dracut
+
+# Run QEMU: choose one by host architecture
+# x86_64 host:
+sudo dnf install -y qemu-system-x86
+
+# aarch64 host:
+sudo dnf install -y qemu-system-aarch64
+```
+
+If you only build rootfs and qcow2 (no initramfs or QEMU run yet), installing the first line plus `qemu-img` is enough.
 
 ## Environment preparation: kernel and modules
 

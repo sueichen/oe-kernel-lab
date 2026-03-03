@@ -11,10 +11,29 @@
 ## 依赖
 
 - 宿主机为 openEuler / CentOS / RHEL 等（使用 dnf/yum）
-- `dnf` / `yum`、`rpm`、`curl`
-- `qemu-system-x86_64` 或 `qemu-system-aarch64`
-- 制作 initramfs 需安装 `dracut`
+- 构建 rootfs：`dnf`、`rpm`、`curl`、`python3`
+- 构建 qcow2：`qemu-img`（raw 转 qcow2）、`e2fsprogs`（mkfs.ext4）
+- 构建 initramfs：`dracut`
+- 运行 QEMU：按宿主机架构安装 `qemu-system-x86`（x86_64）或 `qemu-system-aarch64`（aarch64）
 - 调试内核需自备编译好的内核与模块（见下方「前期准备」）
+
+### 一键安装依赖（dnf）
+
+在 openEuler / CentOS / RHEL 上执行以下命令，按宿主机架构**二选一**安装 QEMU 运行包：
+
+```bash
+# 构建 rootfs + qcow2 + initramfs 所需（所有架构通用）
+sudo dnf install -y dnf rpm curl python3 e2fsprogs util-linux qemu-img dracut
+
+# 运行 QEMU 时启动虚拟机：按宿主机架构二选一
+# x86_64 宿主机：
+sudo dnf install -y qemu-system-x86_64
+
+# aarch64 宿主机：
+sudo dnf install -y qemu-system-aarch64
+```
+
+若仅构建 rootfs 与 qcow2、暂不制作 initramfs 或运行 QEMU，可只安装前一行中的 `qemu-img` 等必要包。
 
 ## 前期准备：内核与模块
 
