@@ -25,19 +25,19 @@ help:
 	@echo "环境变量示例: ARCH=aarch64 make rootfs   PACKAGE_LIST=minimal make rootfs"
 
 rootfs:
-	@bash scripts/mk_rootfs.sh
+	@ARCH="$(ARCH)" PACKAGE_LIST="$(PACKAGE_LIST)" ROOTFS_DIR="$(ROOTFS_DIR)" bash scripts/mk_rootfs.sh
 
 qcow2:
 	@bash scripts/mk_qcow2.sh
 
 initramfs:
-	@bash scripts/mk_initramfs.sh
+	@ARCH="$(ARCH)" bash scripts/mk_initramfs.sh
 
 all: rootfs qcow2 initramfs
 	@echo "全部构建完成。"
 
 run:
-	@bash run/run-qemu.sh
+	@ARCH="$(ARCH)" bash run/run-qemu.sh
 
 gdb:
 	@bash run/gdb-attach.sh

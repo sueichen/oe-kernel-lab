@@ -16,8 +16,8 @@ if [ -f "$WORKDIR/config/default.conf" ]; then
 fi
 # 环境变量优先于配置文件（make ARCH=arm64 rootfs 才能生效）
 ARCH=${SAVED_ARCH:-${ARCH:-x86_64}}
-# 统一架构名：openEuler 使用 aarch64，用户可能传入 arm64
-[ "$ARCH" = "arm64" ] && ARCH=aarch64
+# 统一架构名：openEuler 使用 aarch64，用户可能传入 arm64（用 if 避免 set -e 下 [ ] 为假导致退出）
+if [ "$ARCH" = "arm64" ]; then ARCH=aarch64; fi
 ROOTFS_DIR=${ROOTFS_DIR:-rootfs}
 PACKAGE_LIST=${PACKAGE_LIST:-debug}
 ROOT_PASSWORD=${ROOT_PASSWORD:-OpenEuler@123}
